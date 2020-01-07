@@ -1,0 +1,50 @@
+﻿@page "/viewreceipts"
+
+@inject IJSRuntime jsRuntime
+@inject BlazingReceipts.Shared.IReceiptService receiptService
+
+@using System.Linq;
+@using BlazingReceipts.Shared
+@using BlazingReceipts.Client.Components;
+
+<div class="row text-danger">
+    <h1 class="font-weight-bold">🧾 All Receipts</h1>
+</div>
+
+@if (_todaysReceipts == null || _yesterdaysReceipts == null)
+{
+    <div class="form-row">
+        <span class="spinner-grow spinner-grow-sm text-danger" role="status" aria-hidden="true" />
+    </div>
+}
+
+<div class="row">
+    @if (_todaysReceipts != null)
+    {
+        <ReceiptStatus Heading="🎫 Today's Receipts" Receipts="_todaysReceipts" HandleRowClick="@(r => RowClick(r))" />
+    }
+</div>
+
+<div class="row">
+    @if (_yesterdaysReceipts != null)
+    {
+        <ReceiptStatus Heading="🎫 Yesterday's Receipts" Receipts="_yesterdaysReceipts" HandleRowClick="@(r => RowClick(r))" />
+    }
+</div>
+
+@code {
+    private List<Receipt> _todaysReceipts = null;
+    private List<Receipt> _yesterdaysReceipts = null;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        _todaysReceipts = (await receiptService.GetReceiptsAsync(0))?.ToList();
+        _yesterdaysReceipts = (await receiptService.GetReceiptsAsync(-1))?.ToList();
+    }
+
+    private void RowClick(Receipt selectedReceipt)
+    {
+        jsRuntime.InvokeVoidAsync("open", selectedReceipt.Url, "_blank");
+    }
+}

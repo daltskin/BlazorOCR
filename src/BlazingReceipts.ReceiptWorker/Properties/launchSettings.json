@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "BlazingReceipts.ReceiptWorker": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+﻿@inject IJSRuntime jsRuntime
+
+<div class="card mt-3">
+    <div class="card-header"><h3>📷 Capture</h3></div>
+    <div class="card-body align-content-center">
+        <div class="form-row justify-content-center">
+            <div class="img-magnifier-container">
+                <img id="imgUpload" src="@PreviewImageUrl" class="previewImage rounded" @onload="ImageLoaded" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string PreviewImageUrl { get; set; }
+
+    private async Task ImageLoaded(object args)
+    {
+        await jsRuntime.InvokeVoidAsync("magnify", "imgUpload", 3);
+    }
+}

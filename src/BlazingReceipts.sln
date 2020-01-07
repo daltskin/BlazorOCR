@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29411.138
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazingReceipts.Server", "BlazingReceipts.Server\BlazingReceipts.Server.csproj", "{E993E8F1-3F35-4EE4-BC08-AAEACDE6A339}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazingReceipts.Client", "BlazingReceipts.Client\BlazingReceipts.Client.csproj", "{FC034668-FF34-4676-9451-191525B9838D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazingReceipts.Shared", "BlazingReceipts.Shared\BlazingReceipts.Shared.csproj", "{151F778E-8D53-4FBE-9514-2E405567F595}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazingReceipts.ReceiptWorker", "BlazingReceipts.ReceiptWorker\BlazingReceipts.ReceiptWorker.csproj", "{8F78DA72-BD9A-419F-9D4C-C18C634089A6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorInputFile", "BlazorInputFile\BlazorInputFile.csproj", "{D0811B7D-F415-4E19-84EE-2D6A01E683EA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EEE850D8-C060-45DB-9559-EB090BFC59FA}"
+	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E993E8F1-3F35-4EE4-BC08-AAEACDE6A339}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E993E8F1-3F35-4EE4-BC08-AAEACDE6A339}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E993E8F1-3F35-4EE4-BC08-AAEACDE6A339}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E993E8F1-3F35-4EE4-BC08-AAEACDE6A339}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC034668-FF34-4676-9451-191525B9838D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC034668-FF34-4676-9451-191525B9838D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC034668-FF34-4676-9451-191525B9838D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC034668-FF34-4676-9451-191525B9838D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{151F778E-8D53-4FBE-9514-2E405567F595}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{151F778E-8D53-4FBE-9514-2E405567F595}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{151F778E-8D53-4FBE-9514-2E405567F595}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{151F778E-8D53-4FBE-9514-2E405567F595}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F78DA72-BD9A-419F-9D4C-C18C634089A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F78DA72-BD9A-419F-9D4C-C18C634089A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F78DA72-BD9A-419F-9D4C-C18C634089A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F78DA72-BD9A-419F-9D4C-C18C634089A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0811B7D-F415-4E19-84EE-2D6A01E683EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0811B7D-F415-4E19-84EE-2D6A01E683EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0811B7D-F415-4E19-84EE-2D6A01E683EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0811B7D-F415-4E19-84EE-2D6A01E683EA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {567A997A-5EC3-4D0A-BCAB-C4F1B47E0DEF}
+	EndGlobalSection
+EndGlobal

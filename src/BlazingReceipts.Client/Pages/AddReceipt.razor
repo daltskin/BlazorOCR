@@ -1,0 +1,199 @@
+﻿@page "/addreceipt"
+
+@inject HubConnectionBuilder hubConnectionBuilder
+@inject BlazingReceipts.Shared.IReceiptService receiptService
+@inject IJSRuntime jsRuntime
+@inject NavigationManager navManager
+
+@using Blazor.Extensions;
+@using BlazorInputFile;
+@using BlazingReceipts.Shared;
+@using BlazingReceipts.Client.Components;
+
+    <div class="row text-danger">
+        <h1 class="font-weight-bold">🧾 Add Receipt</h1>
+    </div>
+
+<div class="row">
+    <div class="col-12 col-sm-6">
+        <PreviewReceipt PreviewImageUrl="@_imageBlobUrl" />
+
+        <div class="form-row mt-3">
+        </div>
+
+        <div class="form-row">
+            <div class="btn-group-lg">
+                <label for="inputControl" class="btn btn-primary btn-outlined pointer-event">Capture</label>
+                <BlazorInputFile.InputFile id="inputControl" OnChange="HandleChangeSelected" multiple capture="camera" accept="image/*" style="display: none" />
+                <label for="clear" class="btn btn-primary btn-outlined pointer-event">Clear</label>
+                <input type="button" id="clear" value="Clear" @onclick="ResetReceipt" class="btn btn-primary btn-outlined" style="display: none" />
+                <label for="upload" class="btn btn-primary btn-outlined pointer-event">
+                    @(_uploadStatus != null ? _uploadStatus : _files == null ? $"Recognize" : $"Recognize ({_files?.Count})")
+                    @if (_uploadStatus != null)
+                    {
+                        <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true" />
+                    }
+                </label>
+                <input type="button" id="upload" value="Upload" @onclick="UploadReceipt" class="btn btn-primary btn-outlined" style="display: none" />
+            </div>
+        </div>
+        <div class="form-row" style="@(!string.IsNullOrEmpty(_uploadError) ? "display:inline" : "display:none")">
+            <em>@_uploadError</em>
+        </div>
+        <div class="form-row">
+            <div class="col-sm-12">
+                <ReceiptsTotal ReceiptsSubmittedCount="_submittedRequests?.Count" ReceiptsVerifiedCount="_receiptVerifiedCount" Total="_totalExpense" />
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <ReceiptDetails CurrentReceipt="_selectedReceipt" />
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col">
+        <ReceiptStatus Heading="🎫 Receipt Understanding Status" Receipts="_submittedRequests" HandleRowClick="@(r => ReceiptStatusRowClick(r))" OCRJobProcessing="_websocketOpen" ImageCache="_imageCache" />
+    </div>
+</div>
+
+@code {
+    private int _receiptVerifiedCount = 0;
+    private int _uploadedCount = 0;
+    private List<Receipt> _submittedRequests = new List<Receipt>();
+    private Receipt _selectedReceipt;
+    private string _uploadStatus;
+    private bool _websocketOpen;
+    private Dictionary<string,string> _imageCache = new Dictionary<string, string>();
+
+    private List<IFileListEntry> _files;
+    private string _uploadError = null;
+    private string _imageBlobUrl = "/images/sample_receipt.jpg";
+    private double _totalExpense = 0;
+
+    private HubConnection _connection = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var connectionUrl = await jsRuntime.InvokeAsync<string>("getAppSetting", "hubConnection");
+        _connection = hubConnectionBuilder
+            .WithUrl(connectionUrl,
+            opt =>
+            {
+                opt.LogLevel = SignalRLogLevel.Trace; // Client log level
+                opt.Transport = HttpTransportType.WebSockets; // Which transport you want to use for this connection
+            })
+            .Build();
+        _connection.On<Receipt>("ReceiveMessage", this.OnMessage);
+    }
+
+    private void HandleChangeSelected(IFileListEntry[] files)
+    {
+        if (files?.Length > 0)
+        {
+            // TODO: Add any file type checks if required eg.
+            _files = files.ToList();
+            _imageBlobUrl = _files.FirstOrDefault().Url;
+        }
+    }
+
+    private async Task UploadReceipt()
+    {
+        _uploadError = null;
+        _selectedReceipt = null;
+        _uploadedCount = 0;
+
+        if (_files?.Count > 0)
+        {
+            foreach (var file in _files)
+            {
+                _uploadStatus = $"Uploading ({_files?.Count - _uploadedCount})";
+                var receipt = await receiptService.PostReceiptAsync(file.Data);
+                _imageCache.Add(receipt.Id, file.Url);
+
+                _uploadedCount++;
+                StateHasChanged();
+
+                if (!_websocketOpen)
+                {
+                    await _connection.StartAsync();
+                    _websocketOpen = true;
+                }
+
+                if (!string.IsNullOrEmpty(receipt.Error))
+                {
+                    _uploadError += receipt.Error;
+                }
+                else
+                {
+                    _submittedRequests.Add(receipt);
+                    if (_selectedReceipt == null)
+                    {
+                        _selectedReceipt = receipt;
+                    }
+                }
+            }
+            _uploadStatus = null;
+            _files = null;
+        }
+    }
+
+    private void ResetReceipt()
+    {
+        _uploadError = null;
+        _uploadStatus = null;
+        _uploadError = null;
+        _selectedReceipt = null;
+        _files = null;
+    }
+
+    private void ReceiptStatusRowClick(Receipt selectedReceipt)
+    {
+        var kv = _imageCache?.Where(r => r.Key.Equals(selectedReceipt.Id))?.FirstOrDefault();
+        _imageBlobUrl = (kv == null ? selectedReceipt.Url : kv?.Value);
+
+        if (selectedReceipt.Status.Equals(Constants.OCRServiceOperationStatus.Succeeded.ToString(), StringComparison.InvariantCultureIgnoreCase))
+        {
+            _selectedReceipt = selectedReceipt;
+        }
+        StateHasChanged();
+    }
+
+    private async Task OnMessage(Receipt message)
+    {
+        Console.WriteLine($"Messaged received: {message.Id} && Status: {message.Status} && Recognition complete: {message.OCRComplete}");
+
+        for (int i = 0; i < _submittedRequests.Count; i++)
+        {
+            if (_submittedRequests[i].Id == message.Id)
+            {
+                // Update collection receipt with the latest values
+                _submittedRequests[i] = message;
+
+                Console.WriteLine($"Amount completed: {_submittedRequests.Where(r => r.OCRComplete).Count()}");
+
+                if (message.Status.Equals(Constants.OCRServiceOperationStatus.Succeeded.ToString(), StringComparison.InvariantCultureIgnoreCase))
+                {
+                    _totalExpense += message.Total;
+                    _receiptVerifiedCount++;
+
+                    // Show current receipt results
+                    if (_submittedRequests[i].Id == _selectedReceipt.Id)
+                    {
+                        _selectedReceipt = _submittedRequests[i];
+                    }
+                }
+                break;
+            }
+        }
+
+        if (_submittedRequests.Where(r => r.OCRComplete).Count() == _submittedRequests.Count)
+        {
+            Console.WriteLine("Stopping listening to websockets");
+            await _connection.StopAsync();
+            _websocketOpen = false;
+        }
+        StateHasChanged();
+    }
+}

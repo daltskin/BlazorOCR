@@ -1,0 +1,29 @@
+﻿<div class="card mt-3">
+    <div class="card-header"><h3>💰 Total</h3></div>
+    <div class="card-body">
+        <div class="form-row">
+            <table>
+                <tr>
+                    <td><h4>Receipts verified:</h4></td>
+                    <td><h4>@ReceiptsVerifiedCount/@ReceiptsSubmittedCount</h4></td>
+                </tr>
+                <tr>
+                    <td><h4>Total claim:</h4></td>
+                    <td><h4>@Total.ToString("#0.00")</h4></td>
+                </tr>
+            </table>
+            <h4> </h4>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int ReceiptsVerifiedCount { get; set; }
+
+    [Parameter]
+    public int? ReceiptsSubmittedCount { get; set; }
+
+    [Parameter]
+    public double Total { get; set; }
+}

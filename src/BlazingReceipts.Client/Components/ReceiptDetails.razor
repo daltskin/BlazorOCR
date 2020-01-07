@@ -1,0 +1,57 @@
+﻿@using BlazingReceipts.Shared
+
+@if (CurrentReceipt != null && CurrentReceipt.Status == "Succeeded")
+{
+    <div class="card mt-3">
+        <div class="card-header"><h3>🎫 Receipt</h3></div>
+        <div class="card-body">
+            <div class="form-row">
+                <div class="form-group col-md-12">
+                    <label for="merchant">Merchant</label>
+                    <input type="text" class="form-control valid" id="merchant" placeholder="Merchant" value="@CurrentReceipt.Merchant">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-12">
+                    <label for="merchantAddress">Merchant Address</label>
+                    <input type="text" class="form-control valid" id="merchantAddress" placeholder="Address" value="@CurrentReceipt.Address">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-12">
+                    <label for="transactionDate">Transaction Date</label>
+                    <input type="text" class="form-control valid" id="transactionDate" placeholder="Date" value="@CurrentReceipt.Date?.ToString("dd/MM/yyyy")">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-12">
+                    <label for="transactionTime">Transaction Time</label>
+                    <input type="text" class="form-control valid" id="transactionTime" placeholder="Time" value="@CurrentReceipt.Time?.ToString("HH:mm:ss")">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-12">
+                    <label for="total">Total</label>
+                    <input type="text" class="form-control valid" id="total" placeholder="Total" value="@CurrentReceipt.Total.ToString("#,###,###,##0.00")">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-12">
+                    <label for="total">Sub Total</label>
+                    <input type="text" class="form-control valid" id="subTotal" placeholder="Sub Total" value="@CurrentReceipt.SubTotal.ToString("#,###,###,##0.00")">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-12">
+                    <label for="total">Tax</label>
+                    <input type="text" class="form-control valid" id="tax" placeholder="Tax" value="@CurrentReceipt.Tax.ToString("#,###,###,##0.00")">
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Receipt CurrentReceipt { get; set; }
+}
