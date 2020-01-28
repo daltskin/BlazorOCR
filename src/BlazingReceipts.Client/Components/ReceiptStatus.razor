@@ -1,0 +1,77 @@
+﻿@using BlazingReceipts.Shared
+
+@if (Receipts.Any())
+{
+    <div class="card mt-3">
+        <div class="card-header"><h3>@Heading</h3></div>
+        <div class="card-body">
+            <div class="form-row">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col" >#</th>
+                            <th scope="col" class="d-lg-table-cell d-none">Request Id</th>
+                            <th scope="col" class="d-lg-table-cell d-none">Requested</th>
+                            <th scope="col">
+                                Status
+                                @if (OCRJobProcessing == true)
+                                {
+                                    <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true" />
+                                }
+                            </th>
+                            <th scope="col">TX Date</th>
+                            <th scope="col">Total</th>
+                            <th scope="col" class="d-lg-table-cell d-none">Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int userRequests = 0;
+                            foreach (var request in Receipts)
+                            {
+                                userRequests++;
+                                <tr @onclick="() => HandleRowClick(request)" title="@request.Merchant" style="cursor: pointer;">
+                                    <td>@userRequests</td>
+                                    <td class="d-lg-table-cell d-none">@request.Id</td>
+                                    <td class="d-lg-table-cell d-none">@request.RequestReceived.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                    <td>@request.Status</td>
+                                    <td>@request.Date?.ToString("dd/MM/yyyy")</td>
+                                    <td>@request.Total.ToString("#,###,###,##0.00")</td>
+                                    <td class="d-lg-table-cell d-none"><div class="img-fluid"><img src="@GetImageUrl(request)" height="50" /></div></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-row">
+                <div class="text-right">
+                    Total: @Receipts.Count Receipts
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string Heading { get; set; }
+
+    [Parameter]
+    public List<Receipt> Receipts { get; set; }
+
+    [Parameter]
+    public bool OCRJobProcessing { get; set; }
+
+    [Parameter]
+    public Dictionary<string, string> ImageCache { get; set; }
+
+    [Parameter]
+    public Action<Receipt> HandleRowClick { get; set; }
+
+    private string GetImageUrl(Receipt receipt)
+    {
+        var kv = ImageCache?.Where(r => r.Key.Equals(receipt.Id))?.FirstOrDefault();
+        return (kv == null ? receipt.Url : kv?.Value);
+    }
+}
