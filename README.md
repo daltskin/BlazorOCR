@@ -7,9 +7,14 @@ A Blazor WebAssembly application that can read your receipts.
 
 Using the Receipt Understanding Cognitive Service this web application serves as working PoC (not reference) sample of how you can build your own responsive website that can process multiple documents (receipts).
 
-<img src="docs/addreceipt_result.png" alt="Blazing Receipts"/>
+### Add a new receipt for recognition
+<img src="docs/addreceipt_result.png" alt="Blazing Receipts - add receipt"/>
 
-<img src="docs/allreceipts.png" alt="Blazing Receipts"/>
+### Itemized receipts
+<img src="docs/itemizedreceipt.png" alt="Blazing Receipts - itemized receipt"/>
+
+### View analyzed receipts
+<img src="docs/allreceipts.png" alt="Blazing Receipts - view receipts"/>
 
 For an end-to-end demo see <a href="docs/demo.mp4">here</a>
 
@@ -53,7 +58,7 @@ A slightly tweaked version of Steve Sanderson's [BlazorInputFile](https://github
 
 ## Forms Recognizer - Receipt Understanding Cognitive Service
 
-Computer vision API that can extracts values from scanned receipts
+Computer vision API that can extracts values from scanned receipts.  This project now uses the preview API v2.
 
 ## Requirements
 

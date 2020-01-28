@@ -1,7 +1,10 @@
-﻿namespace BlazingReceipts.Shared
+﻿using System.Text.Json.Serialization;
+
+namespace BlazingReceipts.Shared
 {
     public class OCRRequest
     {
-        public string Url { get; set; }
+        [JsonPropertyName("source")]
+        public string Source { get; set; }
     }
 }

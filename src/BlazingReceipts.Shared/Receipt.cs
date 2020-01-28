@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace BlazingReceipts.Shared
 {
@@ -30,12 +31,22 @@ namespace BlazingReceipts.Shared
         public DateTime? Time { get; set; }
         public double SubTotal { get; set; }
         public double Total { get; set; }
+        public double Tip { get; set; }
         public double Tax { get; set; }
         public string Merchant { get; set; }
+        public LineItem[] Items { get; set; }
         public string Address { get; set; }
         public string Status { get; set; }
         public bool OCRComplete { get; set; }
 
         public string Error { get; set; }
+    }
+
+    public class LineItem
+    {
+        public double Quantity { get; set; }
+        public string Item { get; set; }
+        public double Price { get; set; }
+        public double TotalPrice { get; set; }
     }
 }

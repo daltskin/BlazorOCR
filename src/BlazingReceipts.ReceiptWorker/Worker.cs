@@ -7,9 +7,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Recognizers.Text;
 using Microsoft.Recognizers.Text.DateTime;
+using Microsoft.Recognizers.Text.Number;
 using Microsoft.WindowsAzure.Storage.Queue;
 using System;
 using System.Collections.Generic;
+using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -93,9 +95,9 @@ namespace BlazingReceipts.ReceiptWorker
             Receipt receiptRequest = JsonSerializer.Deserialize<Receipt>(message.AsString);
             if (receiptRequest != null)
             {
-                var ocrRequest = new OCRRequest() { Url = receiptRequest.Url };
+                var ocrRequest = new OCRRequest() { Source = receiptRequest.Url };
                 using var content = new StringContent(JsonSerializer.Serialize(ocrRequest), Encoding.UTF8, "application/json");
-                var response = await _httpClient.PostAsync($"{_configuration["FormRecognizerEndpoint"]}asyncBatchAnalyze", content);
+                var response = await _httpClient.PostAsync($"{_configuration["FormRecognizerEndpoint"]}analyze", content);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -172,25 +174,29 @@ namespace BlazingReceipts.ReceiptWorker
                     receipt.OCRComplete = true;
                 }
 
-                if (ocrResult.understandingResults?.Length > 0)
+                if (ocrResult.analyzeResult?.documentResults?.Length > 0)
                 {
-                    receipt.RequestComplete = DateTime.Now;
-                    receipt.Merchant = ocrResult.understandingResults[0].fields.MerchantName?.text;
-                    receipt.Total = Convert.ToDouble(ocrResult.understandingResults[0].fields.Total?.value);
-                    receipt.SubTotal = Convert.ToDouble(ocrResult.understandingResults[0].fields.Subtotal?.value);
-                    receipt.Tax = Convert.ToDouble(ocrResult.understandingResults[0].fields.Tax?.value);
-                    receipt.Address = ocrResult.understandingResults[0].fields.MerchantAddress?.text;
+                    // Assuming only 1 receipt per scan
+                    var ocrReceipt = ocrResult.analyzeResult?.documentResults.FirstOrDefault();
 
-                    if (ocrResult.understandingResults[0].fields.TransactionTime != null &&
-                        DateTime.TryParse(ocrResult.understandingResults[0].fields.TransactionTime.text, out DateTime time))
+                    receipt.RequestComplete = DateTime.Now;
+                    receipt.Merchant = ocrReceipt.fields.MerchantName?.text;
+                    receipt.Total = Convert.ToDouble(ocrReceipt.fields.Total?.valueNumber);
+                    receipt.SubTotal = Convert.ToDouble(ocrReceipt.fields.Subtotal?.valueNumber);
+                    receipt.Tax = Convert.ToDouble(ocrReceipt.fields.Tax?.valueNumber);
+                    receipt.Tip = Convert.ToDouble(ocrReceipt.fields.Tip?.valueNumber);
+                    //receipt.Address = ocrReceipt.fields.MerchantAddress?.text;
+
+                    if (ocrReceipt.fields.TransactionTime != null &&
+                        DateTime.TryParse(ocrReceipt.fields.TransactionTime.text, out DateTime time))
                     {
                         receipt.Time = time;
                     }
 
-                    if (ocrResult.understandingResults[0].fields.TransactionDate != null)
+                    if (ocrReceipt.fields.TransactionDate != null)
                     {
                         // Dates could come in a variety of different formats and styles
-                        var recognizerDate = DateTimeRecognizer.RecognizeDateTime(ocrResult.understandingResults[0].fields.TransactionDate.text, Culture.English);
+                        var recognizerDate = DateTimeRecognizer.RecognizeDateTime(ocrReceipt.fields.TransactionDate.text, Culture.English);
                         if (recognizerDate.Any())
                         {
                             var recognizerValues = (List<Dictionary<string, string>>)recognizerDate.First().Resolution["values"];
@@ -202,6 +208,49 @@ namespace BlazingReceipts.ReceiptWorker
                                     receipt.Date = outputDate;
                                 }
                             }
+                        }
+                    }
+
+                    // Extract line items
+                    if (ocrReceipt.fields.Items?.valueArray?.Length > 0)
+                    {
+                        receipt.Items = new LineItem[ocrReceipt.fields.Items.valueArray.Length];
+                        for (int i = 0; i < ocrReceipt.fields.Items.valueArray.Length; i++)
+                        {
+                            LineItem lineItem = new LineItem
+                            {
+                                Item = ocrReceipt.fields.Items?.valueArray[i].valueObject?.Name?.text,
+                            };
+
+                            if (ocrReceipt.fields.Items?.valueArray[i].valueObject?.Quantity?.text != null)
+                            {
+                                var quantityRecognizer = NumberRecognizer.RecognizeNumber(ocrReceipt.fields.Items.valueArray[i].valueObject.Quantity.text, Culture.English);
+                                if (quantityRecognizer.Any())
+                                {
+                                    var recognizerValue = quantityRecognizer.FirstOrDefault().Resolution["value"];
+                                    if (recognizerValue != null)
+                                    {
+                                        double.TryParse(recognizerValue.ToString(), out double outputQuantity);
+                                        lineItem.Quantity = outputQuantity;
+                                    }
+                                }
+                            }
+
+                            // Total price could include currency symbol
+                            if (ocrReceipt.fields.Items?.valueArray[i].valueObject?.TotalPrice?.text != null)
+                            {
+                                var numberRecognizer = NumberRecognizer.RecognizeNumber(ocrReceipt.fields.Items.valueArray[i].valueObject.TotalPrice.text, Culture.English);
+                                if (numberRecognizer.Any())
+                                {
+                                    var recognizerValue = numberRecognizer.FirstOrDefault().Resolution["value"];
+                                    if (recognizerValue != null)
+                                    {
+                                        double.TryParse(recognizerValue.ToString(), out double outputTotal);
+                                        lineItem.TotalPrice = outputTotal;
+                                    }
+                                }
+                            }
+                            receipt.Items[i] = lineItem;
                         }
                     }
                     _logger.LogInformation($"Successful OCR receipt extraction Id: {receipt.Id} Total: {receipt.Total}");

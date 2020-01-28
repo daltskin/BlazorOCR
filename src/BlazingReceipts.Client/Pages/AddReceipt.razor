@@ -182,6 +182,7 @@
                     if (_submittedRequests[i].Id == _selectedReceipt.Id)
                     {
                         _selectedReceipt = _submittedRequests[i];
+                        Console.WriteLine($"Receipt selected: {_selectedReceipt.Merchant} {_selectedReceipt.Total}");
                     }
                 }
                 break;
