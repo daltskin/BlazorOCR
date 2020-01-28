@@ -1,6 +1,8 @@
 ﻿# *🔥 Blazing Receipts*
 ## A Blazor WebAssembly application for reading receipts
 
+![.NET Core](https://github.com/daltskin/BlazorOCR/workflows/.NET%20Core/badge.svg)
+
 A Blazor WebAssembly application that can read your receipts.  
 
 <img src="docs/index.png" alt="Blazing Receipts"/>
