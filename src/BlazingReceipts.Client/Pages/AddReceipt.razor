@@ -5,7 +5,7 @@
 @inject IJSRuntime jsRuntime
 @inject NavigationManager navManager
 
-@using Blazor.Extensions;
+@using Microsoft.AspNetCore.SignalR.Client;
 @using BlazorInputFile;
 @using BlazingReceipts.Shared;
 @using BlazingReceipts.Client.Components;
@@ -77,15 +77,35 @@
     protected override async Task OnInitializedAsync()
     {
         var connectionUrl = await jsRuntime.InvokeAsync<string>("getAppSetting", "hubConnection");
-        _connection = hubConnectionBuilder
-            .WithUrl(connectionUrl,
-            opt =>
-            {
-                opt.LogLevel = SignalRLogLevel.Trace; // Client log level
-                opt.Transport = HttpTransportType.WebSockets; // Which transport you want to use for this connection
-            })
-            .Build();
+
+        _connection = new HubConnectionBuilder()
+          .WithUrl(connectionUrl)
+          .Build();
+
         _connection.On<Receipt>("ReceiveMessage", this.OnMessage);
+
+        await _connection.StartAsync();
+
+
+        //_connection.On<string, string>("ReceiveMessage", (user, message) =>
+        //{
+        //    var encodedMsg = user + " says " + message;
+        //    messages.Add(encodedMsg);
+        //    StateHasChanged();
+        //});
+
+        //await hubConnection.StartAsync();
+
+
+        //_connection = hubConnectionBuilder
+        //    .WithUrl(connectionUrl,
+        //    opt =>
+        //    {
+        //        opt.LogLevel = SignalRLogLevel.Trace; // Client log level
+        //        opt.Transport = HttpTransportType.WebSockets; // Which transport you want to use for this connection
+        //    })
+        //    .Build();
+        //_connection.On<Receipt>("ReceiveMessage", this.OnMessage);
     }
 
     private void HandleChangeSelected(IFileListEntry[] files)

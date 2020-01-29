@@ -14,6 +14,6 @@ jobs:
       with:
          dotnet-version: 3.1.101
     - name: Install Blazor template
-      run: dotnet new --install Microsoft.AspNetCore.Blazor.Templates::3.1.0-preview3.19555.2
+      run: dotnet new --install Microsoft.AspNetCore.Blazor.Templates::3.2.0-preview1.20073.1
     - name: Build with dotnet
       run: dotnet build ./src/BlazingReceipts.sln --configuration Release
