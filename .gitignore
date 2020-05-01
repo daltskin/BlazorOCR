@@ -331,3 +331,4 @@ ASALocalRun/
 /BlazorOCR.Server/.config
 
 appsettings.json
+*.appsettings.Development.json

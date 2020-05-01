@@ -1,7 +1,9 @@
 ﻿using BlazingReceipts.Client.Services;
-using Microsoft.AspNetCore.Blazor.Hosting;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace BlazingReceipts.Client
@@ -16,6 +18,8 @@ namespace BlazingReceipts.Client
             builder.Services.AddTransient<HubConnectionBuilder>();
 
             builder.RootComponents.Add<App>("app");
+            builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+
             await builder.Build().RunAsync();
         }
     }

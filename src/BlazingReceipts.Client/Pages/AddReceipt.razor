@@ -10,9 +10,9 @@
 @using BlazingReceipts.Shared;
 @using BlazingReceipts.Client.Components;
 
-    <div class="row text-danger">
-        <h1 class="font-weight-bold">🧾 Add Receipt</h1>
-    </div>
+<div class="row text-danger">
+    <h1 class="font-weight-bold">🧾 Add Receipt</h1>
+</div>
 
 <div class="row">
     <div class="col-12 col-sm-6">
@@ -65,7 +65,7 @@
     private Receipt _selectedReceipt;
     private string _uploadStatus;
     private bool _websocketOpen;
-    private Dictionary<string,string> _imageCache = new Dictionary<string, string>();
+    private Dictionary<string, string> _imageCache = new Dictionary<string, string>();
 
     private List<IFileListEntry> _files;
     private string _uploadError = null;
@@ -83,38 +83,29 @@
           .Build();
 
         _connection.On<Receipt>("ReceiveMessage", this.OnMessage);
-
-        await _connection.StartAsync();
-
-
-        //_connection.On<string, string>("ReceiveMessage", (user, message) =>
-        //{
-        //    var encodedMsg = user + " says " + message;
-        //    messages.Add(encodedMsg);
-        //    StateHasChanged();
-        //});
-
-        //await hubConnection.StartAsync();
-
-
-        //_connection = hubConnectionBuilder
-        //    .WithUrl(connectionUrl,
-        //    opt =>
-        //    {
-        //        opt.LogLevel = SignalRLogLevel.Trace; // Client log level
-        //        opt.Transport = HttpTransportType.WebSockets; // Which transport you want to use for this connection
-        //    })
-        //    .Build();
-        //_connection.On<Receipt>("ReceiveMessage", this.OnMessage);
     }
 
-    private void HandleChangeSelected(IFileListEntry[] files)
+    private async void HandleChangeSelected(IFileListEntry[] files)
     {
         if (files?.Length > 0)
         {
             // TODO: Add any file type checks if required eg.
             _files = files.ToList();
-            _imageBlobUrl = _files.FirstOrDefault().Url;
+
+            _imageBlobUrl = await RenderPreviewImage(_files.FirstOrDefault());
+            StateHasChanged();
+        }
+    }
+
+    private async Task<string> RenderPreviewImage(IFileListEntry file)
+    {
+        var resizedImage = await file.ToImageFileAsync("image/jpeg", 640, 480);
+
+        // Convert to base64 data image src
+        using (var result = new MemoryStream())
+        {
+            await resizedImage.Data.CopyToAsync(result);
+            return $"data:{resizedImage.Type};base64, { Convert.ToBase64String(result.ToArray())}";
         }
     }
 
@@ -130,11 +121,14 @@
             {
                 _uploadStatus = $"Uploading ({_files?.Count - _uploadedCount})";
                 var receipt = await receiptService.PostReceiptAsync(file.Data);
-                _imageCache.Add(receipt.Id, file.Url);
+
+                // Render image for each file and add to cache
+                string base64Image = await RenderPreviewImage(file);
+                _imageCache.Add(receipt.Id, base64Image);
 
                 _uploadedCount++;
-                StateHasChanged();
 
+                Console.WriteLine($"Websocket for receipt id: {receipt.Id}");
                 if (!_websocketOpen)
                 {
                     await _connection.StartAsync();
@@ -153,6 +147,7 @@
                         _selectedReceipt = receipt;
                     }
                 }
+                StateHasChanged();
             }
             _uploadStatus = null;
             _files = null;

@@ -1,5 +1,4 @@
 ﻿using BlazingReceipts.Shared;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -24,28 +23,28 @@ namespace BlazingReceipts.Client.Services
             if (response.IsSuccessStatusCode)
             {
                 var responseJson = await response.Content.ReadAsStringAsync();
-                receipts = JsonSerializer.Deserialize<IEnumerable<Receipt>>(responseJson);
+                receipts = JsonSerializer.Deserialize<IEnumerable<Receipt>>(responseJson, new JsonSerializerOptions() { PropertyNamingPolicy = null });
             }
             return receipts;
         }
 
         public async Task<Receipt> PostReceiptAsync(Stream file)
         {
-            Receipt receiptRequest = new Receipt();
             using (HttpContent fileStreamContent = new StreamContent(file))
             {
                 var response = await _httpClient.PostAsync("Receipt", fileStreamContent);
                 if (response.IsSuccessStatusCode)
                 {
                     var responseJson = await response.Content.ReadAsStringAsync();
-                    receiptRequest = JsonSerializer.Deserialize<Receipt>(responseJson);
+                    return JsonSerializer.Deserialize<Receipt>(responseJson, new JsonSerializerOptions() { PropertyNamingPolicy = null });
                 }
                 else
                 {
+                    var receiptRequest = new Receipt();
                     receiptRequest.Error = $"Error: {await response.Content.ReadAsStringAsync()}";
+                    return receiptRequest;
                 }
             }
-            return receiptRequest;
         }
     }
 }

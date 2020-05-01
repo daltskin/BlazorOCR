@@ -1,21 +1,19 @@
 (function () {
     window.BlazorInputFile = {
         init: function init(elem, componentInstance) {
-            var nextFileId = 0;
+            elem._blazorInputFileNextFileId = 0;
 
             elem.addEventListener('change', function handleInputFileChange(event) {
                 // Reduce to purely serializable data, plus build an index by ID
                 elem._blazorFilesById = {};
-                
                 var fileList = Array.prototype.map.call(elem.files, function (file) {
-                    
                     var result = {
-                        id: ++nextFileId,
+                        id: ++elem._blazorInputFileNextFileId,
                         lastModified: new Date(file.lastModified).toISOString(),
                         name: file.name,
                         size: file.size,
                         type: file.type,
-                        url: window.URL.createObjectURL(file)
+                        relativePath: file.webkitRelativePath
                     };
                     elem._blazorFilesById[result.id] = result;
 
@@ -25,9 +23,52 @@
                     return result;
                 });
 
-                componentInstance.invokeMethodAsync('NotifyChange', fileList).then(null, function (err) {
+                componentInstance.invokeMethodAsync('NotifyChange', fileList).then(function () {
+                    //reset file value ,otherwise, the same filename will not be trigger change event again
+                    elem.value = '';
+                }, function (err) {
+                    //reset file value ,otherwise, the same filename will not be trigger change event again
+                    elem.value = '';
                     throw new Error(err);
                 });
+            });
+        },
+
+        toImageFile(elem, fileId, format, maxWidth, maxHeight) {
+            var originalFile = getFileById(elem, fileId);
+
+            return new Promise(function (resolve) {
+                var originalFileImage = new Image();
+                originalFileImage.onload = function () { resolve(originalFileImage); };
+                originalFileImage.src = URL.createObjectURL(originalFile.blob);
+            }).then(function (loadedImage) {
+                return new Promise(function (resolve) {
+                    var desiredWidthRatio = Math.min(1, maxWidth / loadedImage.width);
+                    var desiredHeightRatio = Math.min(1, maxHeight / loadedImage.height);
+                    var chosenSizeRatio = Math.min(desiredWidthRatio, desiredHeightRatio);
+
+                    var canvas = document.createElement('canvas');
+                    canvas.width = Math.round(loadedImage.width * chosenSizeRatio);
+                    canvas.height = Math.round(loadedImage.height * chosenSizeRatio);
+                    canvas.getContext('2d').drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(resolve, format);
+                });
+            }).then(function (resizedImageBlob) {
+                var result = {
+                    id: ++elem._blazorInputFileNextFileId,
+                    lastModified: originalFile.lastModified,
+                    name: originalFile.name, // Note: we're not changing the file extension
+                    size: resizedImageBlob.size,
+                    type: format,
+                    relativePath: originalFile.relativePath
+                };
+
+                elem._blazorFilesById[result.id] = result;
+
+                // Attach the blob data itself as a non-enumerable property so it doesn't appear in the JSON
+                Object.defineProperty(result, 'blob', { value: resizedImageBlob });
+
+                return result;
             });
         },
 
